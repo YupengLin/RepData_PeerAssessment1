@@ -194,4 +194,4 @@ xyplot(sum~interval|weekend,data=stSum,lty=1,type="l")
 
 ![](PA1_template_files/figure-html/unnamed-chunk-13-1.png) 
 
-Yes, there are different type of activity pattern, In the weekday, more activity is expected, especially in the morning..
+Yes, there are different type of activity pattern, In the weekday, more activity is expected, especially in the morning.
