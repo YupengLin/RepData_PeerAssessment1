@@ -7,19 +7,118 @@ output:
 
 
 ## Loading and preprocessing the data
-
-
-
+1 Read the csv data
+```{r}
+act <- read.csv("activity.csv",stringsAsFactors=FALSE)
+```
+2 Change date variable from string to date variable
+```{r, echo=TRUE}
+act$date <- as.Date(act$date,"%Y-%m-%d")
+```
 ## What is mean total number of steps taken per day?
+
+Please ignore the warning message from loading dplyr package and the table is displayed as following.
+Mean and median step per day. I used the group_by function again.
+```{r,echo=TRUE,results='hide'}
+library(dplyr)
+library(chron)
+library(lattice)
+```
+```{r,echo=TRUE}
+actDaily <- group_by(act,date)
+stepDay <- summarize(actDaily,sum=sum(steps),mean=mean(steps,na.rm=TRUE),median=median(steps,na.rm=TRUE))
+print(stepDay)
+```
+
+Plot the histogram
+```{r,echo=TRUE,cache=FALSE}
+hist(stepDay$sum,xlab="step per day",main="histogram of step per day")
+
+```
+
+
 
 
 
 ## What is the average daily activity pattern?
 
+1 Make a time series plot
+```{r}
+interStat <- group_by(act,interval)
+interMean <- summarize(interStat,mean=mean(steps,na.rm=TRUE))
+plot(interMean$interval,interMean$mean,lty=1,type="l",xlab="Interval",ylab="Mean")
+
+```
+
+2 Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+```{r,cache=FALSE}
+max <- max(interMean$mean)
+for (i in 1:288) {
+  if(interMean[i,2] == max){
+    index <- i
+  }
+}
+intervalMax <- interMean[index,1]
+intervalMax
+```
 
 
 ## Imputing missing values
 
+1 Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
 
+```{r}
+ sum(is.na(act$steps))
+```
+
+2 Devise a strategy for filling in all of the missing values in the dataset.
+
+I used the mean of all day to fill the missing values
+
+3 Create a new dataset that is equal to the original dataset but with the missing data filled in
+```{r}
+
+
+
+interStat <- group_by(act,interval)
+interMean <- summarize(interStat,mean=mean(steps,na.rm=TRUE))
+
+for (i in 1:dim(act)[1]){
+  if(is.na(act[i,1])){
+    interIndex <- act[i,3]
+    act[i,1] <- interMean[[which(interMean$interval==interIndex),2]]
+  }
+}
+
+```
+
+4 Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day
+
+```{r}
+actDaily <- group_by(act,date)
+```
+```{r,cache=FALSE}
+stepDay <- summarize(actDaily,sum=sum(steps),mean=mean(steps,na.rm=TRUE),median=median(steps,na.rm=TRUE))
+hist(stepDay$sum,xlab="step per day",main="histogram of step per day Without NA")
+```
+```{r,cache=FALSE}
+
+print(stepDay)
+```
+From the histogram, we can see that the  histogram that the data in the middle range significantly increases due to the median-adding strategy.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+weekend <- is.weekend(act$date)
+act <- cbind(act,weekend)
+act$weekend <- sub("FALSE","weekday",act$weekend)
+act$weekend <- sub("TRUE","weekend",act$weekend)
+
+st <- group_by(act,interval,weekend)
+stSum <- summarize(st,sum=sum(steps))
+stSum$weekend <- factor(stSum$weekend,labels=c("weekday","weekend"))
+xyplot(sum~interval|weekend,data=stSum,lty=1,type="l")
+
+```
+
+Yes, there are different type of activity pattern, In the weekday, more activity is expected, especially in the morning..
